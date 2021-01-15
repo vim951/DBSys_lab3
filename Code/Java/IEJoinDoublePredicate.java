@@ -125,12 +125,15 @@ public class IEJoinDoublePredicate extends Iterator {
 		
 		int[] P1 = new int[m];
 		int[] P2 = new int[n];
-		int[] B2 = new int[n];
+		int[] B2 = new int[Math.max(m, n)];
 		for (int i=0 ; i<m ; i++) {
 			P1[i]=0;
 		}
 		for (int i=0 ; i<n ; i++) {
 			P2[i]=0;
+		}
+		
+		for (int i=0; i < Math.max(m,n); i++) {
 			B2[i]=0;
 		}
 		
@@ -154,23 +157,37 @@ public class IEJoinDoublePredicate extends Iterator {
 		//======================================Lines 9 and 10 of algo 1======================================
 		
 		int[] O1 = new int[m];
-		int i1 = 0;
-		int i2 = 0;
-		while (i1<m) {
-			while(i2<n && TupleUtils.CompareTupleWithTuple(in1[outFilter[0].operand1.symbol.offset-1], list11.get(i1), outFilter[0].operand1.symbol.offset, list12.get(i2), outFilter[0].operand2.symbol.offset)>=0) {
-				i2++;
+		
+		for (int i = 0; i < m; i++) {
+			O1[i] = n;
+		}
+		
+		int constant1 = 0;
+		for (int i = 0; i < m; i++) {
+			for( int j = constant1 ; j < n ; j++) {
+				if(TupleUtils.CompareTupleWithTuple(in1[outFilter[0].operand1.symbol.offset-1], list11.get(i), outFilter[0].operand1.symbol.offset, list12.get(j), outFilter[0].operand2.symbol.offset)>=0) {
+					O1[i] = j;
+					break;
+				}
+				constant1++;
 			}
-			O1[i1++] = i2;
 		}
 		
 		int[] O2= new int[m];
-		i1 = 0;
-		i2 = 0;
-		while (i1<m) {
-			while(i2<n && TupleUtils.CompareTupleWithTuple(in1[outFilter[1].operand1.symbol.offset-1], list21.get(i1), outFilter[1].operand1.symbol.offset, list22.get(i2), outFilter[1].operand2.symbol.offset)>=0) {
-				i2++;
+		
+		for (int i = 0; i < m; i++) {
+			O2[i] = n;
+		}
+		
+		int constant2 = 0;
+		for (int i = 0; i < m; i++) {
+			for( int j = constant2 ; j < n ; j++) {
+				if(TupleUtils.CompareTupleWithTuple(in1[outFilter[1].operand1.symbol.offset-1], list21.get(i), outFilter[1].operand1.symbol.offset, list22.get(j), outFilter[1].operand2.symbol.offset)>=0) {
+					O2[i] = j;
+					break;
+				}
+				constant2++;
 			}
-			O2[i1++] = i2;
 		}
 		
 		//====================================================================================================
@@ -198,16 +215,15 @@ public class IEJoinDoublePredicate extends Iterator {
 		int off1, off2;
 		Tuple JTuple = new Tuple();
 		AttrType[] JTypes = new AttrType[n_out_flds];
-		TupleUtils.setup_op_tuple(JTuple, JTypes, in1, len_in1, in1, len_in1, t1_str_sizes, t1_str_sizes, proj_list, n_out_flds);
-
+		TupleUtils.setup_op_tuple(JTuple, JTypes, in1, len_in1, in2, len_in2, t1_str_sizes, t2_str_sizes, proj_list, n_out_flds);
 		
 		for (int i=0 ; i<m ; i++) {
 			off2 = O2[i];
-			for (int j=0 ; j<=Math.min(off2, m-1) ; j++) {
+			for (int j=0 ; j < Math.min(off2+1, n) ; j++) {
 				B2[P2[j]] = 1;
 			}
 			off1 = O1[P1[i]];
-			for (int k=off1+eqOff ; k<n ; k++) {
+			for (int k=off1+eqOff; k<n ; k++) {
 				if(B2[k]==1) {
 					Projection.Join(list21.get(i), in1, list12.get(k), in2, JTuple, proj_list, n_out_flds);
 					join_result.add(new Tuple(JTuple));
